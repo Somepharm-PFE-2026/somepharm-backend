@@ -64,3 +64,27 @@ Content-Type: application/json
 
 ### 9. Fetch all Leave Requests
 GET http://localhost:8080/api/demandes-conge
+
+### 10. Register a brand new secure user
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "EMP-999",
+  "email": "secure.emp@somepharm.dz",
+  "password": "mySecurePassword123"
+}
+
+### 11. Login with the secure user (This should return a new Token)
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "matricule": "EMP-999",
+  "password": "mySecurePassword123"
+}
+
+### 12. Try to access the locked Departments API
+# Replace the <PASTE_TOKEN_HERE> with the long random string you got from Step 10 or 11!
+GET http://localhost:8080/api/departements
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJFTVAtOTk5IiwiaWF0IjoxNzc0MTk0NTQ1LCJleHAiOjE3NzQyODA5NDV9.iXUEZnAF8xosHkeJm15P5WTYaEOV7drievHt_m7ZpgY
