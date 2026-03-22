@@ -1,5 +1,5 @@
 package com.somepharm.hrportal.controller;
-
+import com.somepharm.hrportal.dto.UtilisateurDTO;
 import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.service.UtilisateurService;
 import org.springframework.http.HttpStatus;
@@ -26,8 +26,9 @@ public class UtilisateurController {
     }
 
     // GET: Retrieve all Users
+    // GET: Retrieve all Users (NOW SECURED WITH DTO)
     @GetMapping
-    public ResponseEntity<List<Utilisateur>> getAllUtilisateurs() {
+    public ResponseEntity<List<UtilisateurDTO>> getAllUtilisateurs() {
         return ResponseEntity.ok(utilisateurService.getAllUtilisateurs());
     }
 }

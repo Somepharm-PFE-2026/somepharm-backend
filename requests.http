@@ -22,3 +22,28 @@ Content-Type: application/json
 
 ### 4. Get all Utilisateurs
 GET http://localhost:8080/api/utilisateurs
+
+### 5. Create a Manager User
+POST http://localhost:8080/api/utilisateurs
+Content-Type: application/json
+
+{
+  "matricule": "MGR-999",
+  "email": "manager@somepharm.dz",
+  "motDePasse": "supersecretpassword",
+  "statutCompte": "ACTIF"
+}
+
+### 6. Create a Department WITH the Manager attached
+POST http://localhost:8080/api/departements
+Content-Type: application/json
+
+{
+  "nomDept": "Direction Générale",
+  "manager": {
+    "idUser": 2
+  }
+}
+
+### 7. Fetch all Departments (The Magic Reveal)
+GET http://localhost:8080/api/departements

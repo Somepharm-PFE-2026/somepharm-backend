@@ -27,6 +27,7 @@ public class Utilisateur {
     @Column(name = "statut_compte", length = 20)
     private String statutCompte = "ACTIF";
 
-    @Column(name = "id_role")
-    private Long idRole;
+    @ManyToOne
+    @JoinColumn(name = "id_role", referencedColumnName = "id_role")
+    private Role role;
 }
