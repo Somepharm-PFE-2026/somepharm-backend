@@ -1,0 +1,24 @@
+### 1. Get all departments
+GET http://localhost:8080/api/departements
+
+### 2. Create a new Department
+POST http://localhost:8080/api/departements
+Content-Type: application/json
+
+{
+  "nomDept": "Ressources Humaines"
+}
+
+### 3. Create a new Utilisateur
+POST http://localhost:8080/api/utilisateurs
+Content-Type: application/json
+
+{
+  "matricule": "EMP-001",
+  "email": "achraf@somepharm.dz",
+  "motDePasse": "password123",
+  "statutCompte": "ACTIF"
+}
+
+### 4. Get all Utilisateurs
+GET http://localhost:8080/api/utilisateurs
