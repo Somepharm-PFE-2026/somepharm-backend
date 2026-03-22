@@ -18,6 +18,7 @@ public class Departement {
     @Column(name = "nom_dept", nullable = false, length = 100)
     private String nomDept;
 
-    @Column(name = "id_manager")
-    private Long idManager;
+    @OneToOne
+    @JoinColumn(name = "id_manager", referencedColumnName = "id_user")
+    private Utilisateur manager;
 }
