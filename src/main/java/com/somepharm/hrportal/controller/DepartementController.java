@@ -1,5 +1,6 @@
 package com.somepharm.hrportal.controller;
 
+import com.somepharm.hrportal.dto.DepartementDTO;
 import com.somepharm.hrportal.entity.Departement;
 import com.somepharm.hrportal.service.DepartementService;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,9 @@ public class DepartementController {
         return new ResponseEntity<>(savedDept, HttpStatus.CREATED);
     }
 
-    // GET: Get all Departments
+    // GET: Get all Departments (NOW SECURED WITH DTO)
     @GetMapping
-    public ResponseEntity<List<Departement>> getAllDepartements() {
+    public ResponseEntity<List<DepartementDTO>> getAllDepartements() {
         return ResponseEntity.ok(departementService.getAllDepartements());
     }
-}
+} // <-- This is the final brace that closes the class!
