@@ -26,9 +26,26 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 2. Generate a brand new token when a user logs in
+    // 1. Inject the repository at the top of your class
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.somepharm.hrportal.repository.UtilisateurRepository utilisateurRepository;
+
+    // 2. Replace your generateToken method with this:
     public String generateToken(UserDetails userDetails) {
-        return generateToken(new HashMap<>(), userDetails);
+        Map<String, Object> extraClaims = new HashMap<>();
+
+        // Add the Role
+        String userRole = userDetails.getAuthorities().stream()
+                .findFirst()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .orElse("EMPLOYEE");
+        extraClaims.put("role", userRole);
+
+        // Safely fetch the real balance from the database
+        utilisateurRepository.findByMatricule(userDetails.getUsername())
+                .ifPresent(utilisateur -> extraClaims.put("solde", utilisateur.getSoldeConges()));
+
+        return generateToken(extraClaims, userDetails);
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
