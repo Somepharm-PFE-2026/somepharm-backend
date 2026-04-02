@@ -1,3 +1,5 @@
+@no-cookie-jar
+
 ### 1. Get all departments
 GET http://localhost:8080/api/departements
 
@@ -70,9 +72,12 @@ POST http://localhost:8080/api/auth/register
 Content-Type: application/json
 
 {
-  "matricule": "EMP-999",
-  "email": "secure.emp@somepharm.dz",
-  "password": "mySecurePassword123"
+  "matricule": "MGR-999",
+  "nom": "Manager",
+  "prenom": "RH",
+  "email": "manager@somepharm.dz",
+  "motDePasse": "supersecretpassword",
+  "role": "MANAGER"
 }
 
 ### 11. Login with the secure user (This should return a new Token)
@@ -88,3 +93,37 @@ Content-Type: application/json
 # Replace the <PASTE_TOKEN_HERE> with the long random string you got from Step 10 or 11!
 GET http://localhost:8080/api/departements
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJFTVAtOTk5IiwiaWF0IjoxNzc0MTk0NTQ1LCJleHAiOjE3NzQyODA5NDV9.iXUEZnAF8xosHkeJm15P5WTYaEOV7drievHt_m7ZpgY
+
+
+### 13. Manager Action: Approve a Leave Request (Assuming request ID is 1)
+PUT http://localhost:8080/api/demandes/1/statut?statut=APPROUVE
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJFTVAtOTk5IiwiaWF0IjoxNzc0MTk0NTQ1LCJleHAiOjE3NzQyODA5NDV9.iXUEZnAF8xosHkeJm15P5WTYaEOV7drievHt_m7ZpgY
+
+
+### Register the Ultimate Manager
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "BOSS-999",
+  "nom": "Super",
+  "prenom": "Manager",
+  "email": "boss@somepharm.dz",
+  "motDePasse": "admin123",
+  "statutCompte": "ACTIF"
+}
+
+
+### Register a Real Employee
+# @no-cookie-jar
+POST http://localhost:8080/api/auth/register
+Content-Type: application/json
+
+{
+  "matricule": "EMP-002",
+  "nom": "Test",
+  "prenom": "Employee",
+  "email": "emp002@somepharm.dz",
+  "motDePasse": "password123",
+  "statutCompte": "ACTIF"
+}

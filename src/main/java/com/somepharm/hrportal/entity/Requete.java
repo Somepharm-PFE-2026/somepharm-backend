@@ -27,4 +27,13 @@ public class Requete {
     @ManyToOne
     @JoinColumn(name = "id_user", referencedColumnName = "id_user")
     private Utilisateur demandeur;
+    // 🛡️ Manually forcing getters/setters to bypass Lombok crashes
+    public Utilisateur getDemandeur() {
+        return this.demandeur;
+    }
+
+    public void setDemandeur(Utilisateur demandeur) {
+        this.demandeur = demandeur;
+    }
+
 }

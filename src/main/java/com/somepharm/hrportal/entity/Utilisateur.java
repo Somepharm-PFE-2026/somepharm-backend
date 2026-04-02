@@ -41,12 +41,15 @@ public class Utilisateur implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.role != null) {
-            return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.getNomRole()));
+        // Assuming your Utilisateur entity has a relationship to the Role entity named 'role'
+        if (this.role != null && this.role.getNomRole() != null) {
+            return List.of(new SimpleGrantedAuthority(this.role.getNomRole()));
         }
-        return List.of();
+        // Fallback default if no role is found
+        return List.of(new SimpleGrantedAuthority("EMPLOYEE"));
     }
-
+    @Column(name = "solde_conges", nullable = false, columnDefinition = "integer default 30")
+    private Integer soldeConges = 30;
     @Override
     public String getPassword() {
         return this.motDePasse;
