@@ -36,6 +36,8 @@ public class Utilisateur implements UserDetails {
     @ManyToOne
     @JoinColumn(name = "id_role", referencedColumnName = "id_role")
     private Role role;
+    @Column(name = "departement")
+    private String departement = "Général";
 
     // --- SPRING SECURITY METHODS ---
 
@@ -78,5 +80,13 @@ public class Utilisateur implements UserDetails {
     @Override
     public boolean isEnabled() {
         return "ACTIF".equals(this.statutCompte);
+    }
+
+    public String getDepartement() {
+        return departement;
+    }
+
+    public void setDepartement(String departement) {
+        this.departement = departement;
     }
 }

@@ -2,38 +2,41 @@ package com.somepharm.hrportal.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "REQUETE")
-@Inheritance(strategy = InheritanceType.JOINED) // This is the magic annotation!
+@Table(name = "requete")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Data
-@NoArgsConstructor
-public class Requete {
+public abstract class Requete {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_requete")
     private Long idRequete;
 
-    @Column(name = "statut_cycle_vie", nullable = false, length = 50)
-    private String statutCycleVie = "EN_ATTENTE";
+    @Column(nullable = false)
+    private LocalDateTime dateSoumission;
 
-    @Column(name = "date_soumission", updatable = false)
-    private LocalDateTime dateSoumission = LocalDateTime.now();
+    private String description;
 
-    // Linking the request to the User who created it
+    /**
+     * Possible values:
+     * EN_ATTENTE_MANAGER (Initial state)
+     * VALIDE_MANAGER (Approved by Dept Boss)
+     * APPROUVE (Final approval by HR - Deducts balance)
+     * REFUSE (Rejected at any step)
+     */
+    @Column(nullable = false)
+    private String statutCycleVie;
+
+    /**
+     * Stores the reason for refusal or a general comment
+     * from the validator (Manager or HR).
+     */
+    @Column(name = "commentaire_action", length = 500)
+    private String commentaireAction;
+
     @ManyToOne
-    @JoinColumn(name = "id_user", referencedColumnName = "id_user")
+    @JoinColumn(name = "id_user", nullable = false)
     private Utilisateur demandeur;
-    // 🛡️ Manually forcing getters/setters to bypass Lombok crashes
-    public Utilisateur getDemandeur() {
-        return this.demandeur;
-    }
-
-    public void setDemandeur(Utilisateur demandeur) {
-        this.demandeur = demandeur;
-    }
-
 }
