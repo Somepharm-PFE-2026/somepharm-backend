@@ -1,10 +1,14 @@
 package com.somepharm.hrportal.service;
-import java.time.temporal.ChronoUnit;
+
 import com.somepharm.hrportal.dto.DemandeCongeDTO;
 import com.somepharm.hrportal.entity.DemandeConge;
+import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.DemandeCongeRepository;
 import org.springframework.stereotype.Service;
-import com.somepharm.hrportal.entity.Utilisateur;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,34 +20,7 @@ public class DemandeCongeService {
     public DemandeCongeService(DemandeCongeRepository demandeCongeRepository) {
         this.demandeCongeRepository = demandeCongeRepository;
     }
-    public DemandeConge updateStatut(Long id, String nouveauStatut) {
-        // 1. Find the request
-        DemandeConge demande = demandeCongeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Demande non trouvée avec l'ID : " + id));
 
-        // 2. If the request is being APPROVED, we do the math
-        if ("APPROUVE".equals(nouveauStatut) && "EN_ATTENTE".equals(demande.getStatutCycleVie())) {
-            Utilisateur demandeur = demande.getDemandeur();
-
-            // Calculate total days (Adding 1 because if you take Monday to Monday, that's 1 day off)
-            long joursDemandes = ChronoUnit.DAYS.between(demande.getDateDebut(), demande.getDateFin()) + 1;
-
-            // Check if they have enough balance!
-            if (demandeur.getSoldeConges() < joursDemandes) {
-                throw new RuntimeException("Solde de congés insuffisant pour cette demande.");
-            }
-
-            // Deduct the days from the balance
-            demandeur.setSoldeConges((int) (demandeur.getSoldeConges() - joursDemandes));
-
-            // Note: Because 'demandeur' is linked to 'demande', Hibernate will automatically
-            // update the Utilisateur table in PostgreSQL when we save the demande below!
-        }
-
-        // 3. Update the status and save
-        demande.setStatutCycleVie(nouveauStatut);
-        return demandeCongeRepository.save(demande);
-    }
     public DemandeConge createDemande(DemandeConge demande) {
         return demandeCongeRepository.save(demande);
     }
@@ -54,26 +31,75 @@ public class DemandeCongeService {
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
+
     public List<DemandeConge> getRequestsByMatricule(String matricule) {
-        // Corrected variable name: demandeCongeRepository
         return demandeCongeRepository.findByDemandeur_Matricule(matricule);
     }
+
+    /**
+     * 🚀 NEW ALGERIAN BUSINESS LOGIC:
+     * Calcule uniquement les jours ouvrables (Ignore Vendredi et Samedi)
+     */
+    private long calculerJoursOuvrables(LocalDate debut, LocalDate fin) {
+        long joursOuvrables = 0;
+        LocalDate dateCourante = debut;
+
+        while (!dateCourante.isAfter(fin)) {
+            DayOfWeek jour = dateCourante.getDayOfWeek();
+            // En Algérie, le week-end = Vendredi et Samedi
+            if (jour != DayOfWeek.FRIDAY && jour != DayOfWeek.SATURDAY) {
+                joursOuvrables++;
+            }
+            // Passer au jour suivant
+            dateCourante = dateCourante.plusDays(1);
+        }
+        return joursOuvrables;
+    }
+
+    @Transactional
+    public DemandeConge updateStatut(Long id, String nouveauStatut, String commentaire) {
+        DemandeConge demande = demandeCongeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Demande non trouvée"));
+
+        // 🚀 ACCENT-PROOF CHECK: Accepts "APPROUVE", "approuvé", etc.
+        boolean isApproving = "APPROUVE".equalsIgnoreCase(nouveauStatut) || "APPROUVÉ".equalsIgnoreCase(nouveauStatut);
+        boolean wasNotApproved = !"APPROUVE".equalsIgnoreCase(demande.getStatutCycleVie()) && !"APPROUVÉ".equalsIgnoreCase(demande.getStatutCycleVie());
+
+        if (isApproving && wasNotApproved) {
+            Utilisateur demandeur = demande.getDemandeur();
+
+            // 🚀 Use the new Smart Math instead of ChronoUnit
+            long jours = calculerJoursOuvrables(demande.getDateDebut(), demande.getDateFin());
+
+            if (demandeur.getSoldeConges() < (int) jours) {
+                throw new RuntimeException("Solde insuffisant (" + demandeur.getSoldeConges() + " jours restants, demande exige: " + jours + " jours).");
+            }
+            demandeur.setSoldeConges(demandeur.getSoldeConges() - (int) jours);
+        }
+
+        // Normalize the status string to ensure it's always saved correctly in the DB
+        demande.setStatutCycleVie(isApproving ? "APPROUVÉ" : nouveauStatut);
+        demande.setCommentaireAction(commentaire);
+
+        return demandeCongeRepository.save(demande);
+    }
+
     public DemandeCongeDTO convertToDTO(DemandeConge demande) {
-        System.out.println("DEBUG: Running the NEW version of convertToDTO!");
         DemandeCongeDTO dto = new DemandeCongeDTO();
-
-        // From Parent (Requete)
         dto.setIdRequete(demande.getIdRequete());
-        dto.setStatutCycleVie(demande.getStatutCycleVie());
         dto.setDateSoumission(demande.getDateSoumission());
+        dto.setDescription(demande.getDescription());
 
-        // Safe Requester Details
+        // Removed the invalid setStatut line. Just keep this one:
+        dto.setStatutCycleVie(demande.getStatutCycleVie());
+
+        dto.setCommentaireAction(demande.getCommentaireAction());
+
         if (demande.getDemandeur() != null) {
             dto.setDemandeurId(demande.getDemandeur().getIdUser());
             dto.setDemandeurMatricule(demande.getDemandeur().getMatricule());
         }
 
-        // From Child (DemandeConge)
         dto.setDateDebut(demande.getDateDebut());
         dto.setDateFin(demande.getDateFin());
         dto.setMotif(demande.getMotif());
