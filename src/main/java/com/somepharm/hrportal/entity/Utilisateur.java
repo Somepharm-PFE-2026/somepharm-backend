@@ -15,7 +15,10 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class Utilisateur implements UserDetails {
-
+    // Add these right below your existing fields (like email, matricule, etc.)
+    private String nom;
+    private String prenom;
+    private String telephone;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_user")
@@ -50,8 +53,9 @@ public class Utilisateur implements UserDetails {
         // Fallback default if no role is found
         return List.of(new SimpleGrantedAuthority("EMPLOYEE"));
     }
-    @Column(name = "solde_conges", nullable = false, columnDefinition = "integer default 30")
-    private Integer soldeConges = 30;
+    // 🚀 Let Java handle the decimal point naturally without forcing SQL constraints!
+    @Column(name = "solde_conges", nullable = false)
+    private Double soldeConges = 30.0;
     @Override
     public String getPassword() {
         return this.motDePasse;

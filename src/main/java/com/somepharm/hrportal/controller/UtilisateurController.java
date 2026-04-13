@@ -2,6 +2,7 @@ package com.somepharm.hrportal.controller;
 
 import com.somepharm.hrportal.entity.Utilisateur;
 import com.somepharm.hrportal.repository.UtilisateurRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -36,9 +37,31 @@ public class UtilisateurController {
         return ResponseEntity.ok(utilisateurRepository.findAll());
     }
 
+    // --- NEW: THE SECURE DIRECTORY ENDPOINT (Role-Based Visibility) ---
+    @GetMapping("/directory")
+    public ResponseEntity<?> getEmployeeDirectory() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur currentUser = utilisateurRepository.findByMatricule(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        String role = currentUser.getRole() != null ? currentUser.getRole().getNomRole() : "EMPLOYEE";
+
+        if (role.equals("HR_ADMIN") || role.equals("ROLE_HR_ADMIN")) {
+            // HR sees EVERYONE
+            return ResponseEntity.ok(utilisateurRepository.findAll());
+        } else if (role.equals("MANAGER") || role.equals("ROLE_MANAGER")) {
+            // Manager sees ONLY their department
+            return ResponseEntity.ok(utilisateurRepository.findByDepartement(currentUser.getDepartement()));
+        } else {
+            // Employee sees NOTHING (Returns a 403 Forbidden Error to trigger the React block screen)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Accès refusé. Réservé aux Managers et RH.");
+        }
+    }
+
     @PostMapping("/create")
     public ResponseEntity<Utilisateur> createUser(@RequestBody Utilisateur newUser) {
-        newUser.setSoldeConges(30);
+        // 🚀 FIXED: Changed 30 to 30.0 because the field is now a Double!
+        newUser.setSoldeConges(30.0);
         newUser.setStatutCompte("ACTIF");
 
         // Default to Général if none provided
@@ -59,7 +82,10 @@ public class UtilisateurController {
     public ResponseEntity<Utilisateur> updateEmployee(@PathVariable Long id, @RequestBody Utilisateur updatedData) {
         Utilisateur existing = utilisateurRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Employé introuvable"));
-
+        // Add these lines inside updateEmployee to save the new data
+        existing.setNom(updatedData.getNom());
+        existing.setPrenom(updatedData.getPrenom());
+        existing.setTelephone(updatedData.getTelephone());
         existing.setEmail(updatedData.getEmail());
         existing.setRole(updatedData.getRole());
 
@@ -68,7 +94,8 @@ public class UtilisateurController {
             existing.setDepartement(updatedData.getDepartement());
         }
 
-        if (updatedData.getSoldeConges() >= 0) {
+        // 🚀 FIXED: Added null check and changed 0 to 0.0 for the Double comparison
+        if (updatedData.getSoldeConges() != null && updatedData.getSoldeConges() >= 0.0) {
             existing.setSoldeConges(updatedData.getSoldeConges());
         }
 
@@ -99,5 +126,11 @@ public class UtilisateurController {
         utilisateurRepository.save(existing);
 
         return ResponseEntity.ok(Collections.singletonMap("tempPassword", tempPassword));
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<Utilisateur> getUserById(@PathVariable Long id) {
+        return utilisateurRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new RuntimeException("Employé introuvable"));
     }
 }
